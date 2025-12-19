@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vesper iPhone Recon</title>
+    <style>
+        body { font-family: monospace; background: #000; color: #ff0066; padding: 20px; }
+        pre { background: #111; padding: 20px; border-radius: 10px; }
+        button { padding: 15px; font-size: 18px; background: #cc0000; color: white; border: none; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Vesper Recon — iPhone</h1>
+    <p>Tap the button. Copy the JSON below and send it to me.</p>
+    <button onclick="runRecon()">RUN RECON</button>
+    <pre id="output">Result will appear here...</pre>
+
+    <script>
+        async function runRecon() {
+            const output = {
+                timestamp: new Date().toISOString(),
+                device: {
+                    user_agent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    languages: navigator.languages,
+                    cores: navigator.hardwareConcurrency || 'hidden',
+                    memory_gb: navigator.deviceMemory || 'hidden',
+                },
+                screen: {
+                    width: screen.width,
+                    height: screen.height,
+                    avail_width: screen.availWidth,
+                    avail_height: screen.availHeight,
+                    color_depth: screen.colorDepth
+                },
+                network: navigator.connection ? {
+                    type: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink,
+                    rtt: navigator.connection.rtt
+                } : 'hidden',
+                battery: 'requesting...',
+                storage: 'requesting...'
+            };
+
+            if (navigator.getBattery) {
+                try {
+                    const bat = await navigator.getBattery();
+                    output.battery = {
+                        level_percent: Math.round(bat.level * 100),
+                        charging: bat.charging
+                    };
+                } catch(e) { output.battery = 'blocked'; }
+            } else {
+                output.battery = 'API unavailable';
+            }
+
+            if (navigator.storage && navigator.storage.estimate) {
+                try {
+                    const est = await navigator.storage.estimate();
+                    output.storage = {
+                        usage_mb: Math.round(est.usage / 1024 / 1024),
+                        quota_mb: Math.round(est.quota / 1024 / 1024)
+                    };
+                } catch(e) { output.storage = 'blocked'; }
+            } else {
+                output.storage = 'API unavailable';
+            }
+
+            document.getElementById('output').textContent = JSON.stringify(output, null, 2);
+        }
+    </script>
+</body>
+</html>
